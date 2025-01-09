@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
-export interface ResponseData {
+const OLLAMA_API_URL = 'http://localhost:11434/api/generate'
+
+export interface OllamaResponse {
     model: string
     created_at: string
     response: string
@@ -14,50 +16,73 @@ export interface ResponseData {
     eval_duration: number
 }
 
+const fileToBase64 = async (file: Blob): Promise<string> => {
+    const buffer = await file.arrayBuffer()
+    return Buffer.from(buffer).toString('base64')
+}
+
+const callOllama = async (payload: object): Promise<OllamaResponse> => {
+    const response = await fetch(OLLAMA_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Ollama API error: ${error}`)
+    }
+
+    return response.json()
+}
+
 export async function POST(req: Request) {
     try {
         const formData = await req.formData()
-        const file = formData.get('file') as Blob
+        const file = formData.get('file')
 
-        if (!file) {
+        if (!file || !(file instanceof Blob)) {
             return NextResponse.json(
-                { error: 'File is required' },
+                { error: 'Valid file is required' },
                 { status: 400 }
             )
         }
 
-        // Convert the file to a base64-encoded string
-        const fileArrayBuffer = await file.arrayBuffer()
-        const base64Image = Buffer.from(fileArrayBuffer).toString('base64')
-
-        // Prepare the payload
-        const payload = {
+        // Extract text from image
+        const base64Image = await fileToBase64(file)
+        const ocrResult = await callOllama({
             model: 'minicpm-v',
-            prompt: 'Analyze the image and provide a concise response.',
+            prompt: 'Explain the image precisely.',
             stream: false,
             images: [base64Image],
-        }
-
-        // Send the request to the local Ollama instance
-        const response = await fetch('http://localhost:11434/api/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
         })
 
-        if (!response.ok) {
-            const error = await response.text()
-            return NextResponse.json({ error }, { status: response.status })
-        }
+        // Structure the extracted text as JSON
+        const llmResult = await callOllama({
+            model: 'llama3.2',
+            prompt: `Structure this text as JSON: ${ocrResult.response}`,
+            stream: false,
+            format: 'json',
+        })
 
-        const result: ResponseData = await response.json()
-        return NextResponse.json({ result })
+        // Validate JSON response
+        try {
+            return NextResponse.json({ result: llmResult })
+        } catch {
+            return NextResponse.json(
+                { error: 'Failed to parse structured response' },
+                { status: 422 }
+            )
+        }
     } catch (error) {
-        console.error(error)
+        console.error('OCR processing error:', error)
         return NextResponse.json(
-            { error: 'An unexpected error occurred' },
+            {
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : 'An unexpected error occurred',
+            },
             { status: 500 }
         )
     }

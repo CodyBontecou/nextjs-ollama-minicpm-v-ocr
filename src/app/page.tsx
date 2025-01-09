@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { FileUpload } from '../components/file-upload'
-import { ResponseData } from './api/process-file/route'
+import { OllamaResponse } from './api/process-file/route'
 
 export default function Home() {
-    const [fileContent, setFileContent] = useState<ResponseData | null>(null)
+    const [fileContent, setFileContent] = useState<OllamaResponse | null>(null)
 
-    const handleFileSelect = (res: ResponseData) => {
+    const handleFileSelect = (res: OllamaResponse) => {
         setFileContent(res)
     }
 
@@ -23,12 +23,7 @@ export default function Home() {
                         File Content
                     </h2>
                     <pre className="text-sm overflow-auto">
-                        {' '}
-                        {Object.entries(fileContent).map(([key, value]) => (
-                            <p key={key}>
-                                {key}: {value}
-                            </p>
-                        ))}
+                        {fileContent.response}
                     </pre>
                 </div>
             )}
