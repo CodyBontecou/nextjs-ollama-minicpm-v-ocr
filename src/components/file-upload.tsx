@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, DragEvent } from 'react'
 import { Upload, File, Loader } from 'lucide-react'
-import { ResponseData } from '@/app/api/process-file/route'
+import { OllamaResponse } from '@/app/api/process-file/route'
 
 interface FileUploadProps {
-    onProcessingComplete: (result: ResponseData) => void
+    onProcessingComplete: (result: OllamaResponse) => void
 }
 
 export function FileUpload({ onProcessingComplete }: FileUploadProps) {
