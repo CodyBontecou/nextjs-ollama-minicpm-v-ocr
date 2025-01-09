@@ -17,10 +17,7 @@ export default function Home() {
                 <FileUpload onProcessingComplete={handleFileSelect} />
             </div>
             {fileContent && (
-                <div className="w-full max-w-md p-4 bg-gray-100 rounded shadow">
-                    <h2 className="text-2xl font-semibold mb-4">
-                        File Content
-                    </h2>
+                <div className="w-full  p-4 bg-gray-100 rounded shadow">
                     <pre className="text-sm overflow-auto">
                         {fileContent.response}
                     </pre>
