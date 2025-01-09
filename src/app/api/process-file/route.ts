@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         // Structure the extracted text as JSON
         const llmResult = await callOllama({
             model: 'llama3.2',
-            prompt: `Structure this text as JSON: ${ocrResult.response}`,
+            prompt: `Provide sentiment analysis in the form of JSON. Provide sentiment, emotions, and reasoning: ${ocrResult.response}`,
             stream: false,
             format: 'json',
         })
